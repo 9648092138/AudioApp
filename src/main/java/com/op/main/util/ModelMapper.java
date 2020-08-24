@@ -3,7 +3,7 @@ package com.op.main.util;
 
 import com.op.main.model.User;
 import com.op.main.payload.ChoiceResponse;
-import com.op.main.payload.PollResponse;
+
 import com.op.main.payload.UserSummary;
 
 import java.time.Instant;

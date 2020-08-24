@@ -9,15 +9,19 @@ import javax.validation.constraints.*;
 public class SignUpRequest {
     @NotBlank
     @Size(min = 4, max = 40)
+    @NotEmpty(message = "Please provide your  name")
     private String name;
+    
 
     @NotBlank
     @Size(min = 3, max = 15)
+    @NotEmpty(message = "Please provide your  username")
     private String username;
 
     @NotBlank
     @Size(max = 40)
-    @Email
+    @Email(message = "Please provide a valid e-mail")
+	@NotEmpty(message = "Please provide an e-mail")
     private String email;
 
     @NotBlank

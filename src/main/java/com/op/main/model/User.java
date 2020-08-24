@@ -3,6 +3,7 @@ package com.op.main.model;
 import org.hibernate.annotations.GenericGenerator;
 import org.hibernate.annotations.NaturalId;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.op.main.model.audit.DateAudit;
 
 import javax.persistence.*;
@@ -51,7 +52,27 @@ public class User extends DateAudit {
 	
 	@Column(name = "reset_token")
 	private String resetToken;
+	
+	@Column(name = "enabled")
+	private boolean enabled;
 
+	public String getMobileNo() {
+		return mobileNo;
+	}
+
+	public void setMobileNo(String mobileNo) {
+		this.mobileNo = mobileNo;
+	}
+
+	public boolean isEnabled() {
+		return enabled;
+	}
+
+	public void setEnabled(boolean enabled) {
+		this.enabled = enabled;
+	}
+
+	@JsonIgnore
 	@ManyToMany(fetch = FetchType.LAZY)
 	@JoinTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
 	private Set<Role> roles = new HashSet<>();
@@ -73,11 +94,17 @@ public class User extends DateAudit {
 
 	}
 
-	public User(String name, String username, String email, String password) {
+	
+
+	public User(@NotBlank @Size(max = 40) String name, @NotBlank @Size(max = 15) String username,
+			@NotBlank @Size(max = 40) @Email String email, @NotBlank @Size(max = 100) String password,
+			@Size(min = 0, max = 10) @Pattern(regexp = "(^$|[0-9]{10})") String mobileNo) {
+		super();
 		this.name = name;
 		this.username = username;
 		this.email = email;
 		this.password = password;
+		this.mobileNo = mobileNo;
 	}
 
 	public Long getId() {
@@ -119,11 +146,11 @@ public class User extends DateAudit {
 	public void setPassword(String password) {
 		this.password = password;
 	}
-
+	 @JsonIgnore
 	public Set<Role> getRoles() {
 		return roles;
 	}
-
+	 @JsonIgnore
 	public void setRoles(Set<Role> roles) {
 		this.roles = roles;
 	}

@@ -21,6 +21,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -76,45 +77,58 @@ public class AuthController {
         return ResponseEntity.ok(new JwtAuthenticationResponse(jwt));
     }
 
-    @PostMapping("/signup")
-    public ResponseEntity<?> registerUser(@Valid @RequestBody SignUpRequest signUpRequest) {
-    	Optional<User> userdetail =userRepository.findByEmail(signUpRequest.getEmail());
-    	
-    	if(userdetail.isPresent()==true) {
-    		 uid = userdetail.get().getUserId();
-    	}
-        if(userRepository.existsByUsername(signUpRequest.getUsername())) {
-    
-            return new ResponseEntity(new ApiResponse(false, "Username is already taken!",uid),
-                    HttpStatus.BAD_REQUEST);
-        }
+	@PostMapping("/signup")
+	public ResponseEntity<?> registerUser(@Valid @RequestBody SignUpRequest signUpRequest) {
+		Optional<User> userdetail = userRepository.findByEmail(signUpRequest.getEmail());
+		Optional<User> usermob =userRepository.findBymobileNo(signUpRequest.getMobileNo());
+		if (userdetail.isPresent() == true) {
+			uid = userdetail.get().getUserId();
+		}
+		if (userRepository.existsByUsername(signUpRequest.getUsername())) {
 
-        if(userRepository.existsByEmail(signUpRequest.getEmail())) {
-            return new ResponseEntity(new ApiResponse(false, "Email Address already in use!",uid),
-                    HttpStatus.BAD_REQUEST);
-        }
+			return new ResponseEntity(
+					new ApiResponse(false, "Username is already taken!", uid, userdetail.get().getId()),
+					HttpStatus.BAD_REQUEST);
+		}
 
-        // Creating user's account
-        User user = new User(signUpRequest.getName(), signUpRequest.getUsername(),
-                signUpRequest.getEmail(), signUpRequest.getPassword());
+		if (userRepository.existsByEmail(signUpRequest.getEmail())) {
+			return new ResponseEntity(
+					new ApiResponse(false, "Email Address already in use!", uid, userdetail.get().getId()),
+					HttpStatus.BAD_REQUEST);
+		}
+		 if(usermob.isPresent()==true) {
+	            
+	            return new ResponseEntity(new ApiResponse(false, "Mobile no already Registered!",usermob.get().getUserId(),usermob.get().getId()),
+	                    HttpStatus.BAD_REQUEST);
+	        }
+		// Creating user's account
+		User user = new User(signUpRequest.getName(), signUpRequest.getUsername(), signUpRequest.getEmail(),
+				signUpRequest.getPassword(), signUpRequest.getMobileNo());
 
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
+		user.setPassword(passwordEncoder.encode(user.getPassword()));
 
-        Role userRole = roleRepository.findByName(RoleName.ROLE_USER)
-                .orElseThrow(() -> new AppException("User Role not set."));
+		Role userRole = roleRepository.findByName(RoleName.ROLE_USER)
+				.orElseThrow(() -> new AppException("User Role not set."));
 
-        user.setRoles(Collections.singleton(userRole));
-        UUID uuid = UUID.randomUUID();
-        System.out.println("Random UUID :" + uuid.toString());
-        System.out.println("UUID version :" + uuid.version()); 
-        user.setUserId(uuid);
-       // String userid = user.setUserId(uuid);
-        User result = userRepository.save(user);
-        emailService.sendSimpleMessage(result);
-        URI location = ServletUriComponentsBuilder
-                .fromCurrentContextPath().path("/users/{username}")
-                .buildAndExpand(result.getUsername()).toUri();
+		user.setRoles(Collections.singleton(userRole));
+		UUID uuid = UUID.randomUUID();
+		System.out.println("Random UUID :" + uuid.toString());
+		System.out.println("UUID version :" + uuid.version());
+		user.setUserId(uuid);
+		user.setEnabled(false);
+		// String userid = user.setUserId(uuid);
+		User result = userRepository.save(user);
+		emailService.sendSimpleMessage(result);
+		URI location = ServletUriComponentsBuilder.fromCurrentContextPath().path("/users/{username}")
+				.buildAndExpand(result.getUsername()).toUri();
 
-        return ResponseEntity.created(location).body(new ApiResponse(true, "User registered successfully",result.getUserId()));
-    }
+		return ResponseEntity.created(location)
+				
+				.body(new ApiResponse(true, "User registered successfully", result.getUserId(), result.getId()));
+	}
+	
+	
+	
+	
+	
 }
